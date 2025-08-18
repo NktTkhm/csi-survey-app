@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import UserSelection from './components/UserSelection';
 import ProjectSelection from './components/ProjectSelection';
 import Survey from './components/Survey';
+import SurveyComplete from './components/SurveyComplete';
 import AdminPanel from './components/AdminPanel';
 import './App.css';
 
@@ -15,6 +16,7 @@ function App() {
           <Route path="/" element={<UserSelection />} />
           <Route path="/projects/:userId" element={<ProjectSelection />} />
           <Route path="/survey/:userId/:projectId" element={<Survey />} />
+          <Route path="/complete" element={<SurveyComplete />} />
           <Route path="/admin" element={<AdminPanel />} />
         </Routes>
         <Toaster 
