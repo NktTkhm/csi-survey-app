@@ -3,11 +3,11 @@
 
 PORT=5000
 TELEGRAM_BOT_TOKEN=7760488085:AAHTUSXbuJSSSmET-UdSpEPG1AmsoZesIlA
-ADMIN_CHAT_ID=ВАШ_CHAT_ID_ОТ_USERINFOBOT
+ADMIN_CHAT_ID=7457987990
 JWT_SECRET=mysecretkey123456789abcdef
 DB_PATH=./database.sqlite
 CORS_ORIGIN=https://ваш-домен.railway.app
 
 # Инструкция:
-# 1. Замените ВАШ_CHAT_ID_ОТ_USERINFOBOT на ваш Chat ID
+# 1. Скопируйте все значения выше в Railway Variables
 # 2. После деплоя замените ваш-домен.railway.app на реальный URL
