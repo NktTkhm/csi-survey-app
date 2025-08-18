@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import { 
   Users, 
-  Folder, 
+  FolderOpen, 
+  BarChart3, 
   Plus, 
   Edit, 
   Trash2, 
   Link, 
   Unlink, 
-  Download,
-  Send,
+  Download, 
   Settings,
-  BarChart3
+  UserPlus,
+  FolderPlus
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import axios from 'axios';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('users');
@@ -23,13 +24,19 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     is_admin: false,
-    is_active: true
+    is_active: true,
+    description: ''
+  });
+  const [assignData, setAssignData] = useState({
+    userId: '',
+    projectId: ''
   });
 
   useEffect(() => {
@@ -38,12 +45,12 @@ const AdminPanel = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [usersRes, projectsRes, resultsRes] = await Promise.all([
         axios.get('/api/admin/users'),
         axios.get('/api/admin/projects'),
         axios.get('/api/admin/survey-results')
       ]);
-      
       setUsers(usersRes.data);
       setProjects(projectsRes.data);
       setSurveyResults(resultsRes.data);
@@ -66,7 +73,6 @@ const AdminPanel = () => {
         toast.success('Пользователь создан');
       }
       setShowUserModal(false);
-      setEditingUser(null);
       setFormData({ name: '', email: '', is_admin: false, is_active: true });
       fetchData();
     } catch (error) {
@@ -86,7 +92,6 @@ const AdminPanel = () => {
         toast.success('Проект создан');
       }
       setShowProjectModal(false);
-      setEditingProject(null);
       setFormData({ name: '', description: '' });
       fetchData();
     } catch (error) {
@@ -95,10 +100,13 @@ const AdminPanel = () => {
     }
   };
 
-  const handleAssignUserToProject = async (userId, projectId) => {
+  const handleAssignUserToProject = async (e) => {
+    e.preventDefault();
     try {
-      await axios.post('/api/admin/user-projects', { userId, projectId });
+      await axios.post('/api/admin/user-projects', assignData);
       toast.success('Пользователь назначен на проект');
+      setShowAssignModal(false);
+      setAssignData({ userId: '', projectId: '' });
       fetchData();
     } catch (error) {
       console.error('Ошибка назначения:', error);
@@ -157,6 +165,10 @@ const AdminPanel = () => {
     setShowProjectModal(true);
   };
 
+  const openAssignModal = () => {
+    setShowAssignModal(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -184,48 +196,64 @@ const AdminPanel = () => {
             </div>
             <div className="flex space-x-3">
               <button
+                onClick={openAssignModal}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Link className="w-4 h-4" />
+                <span>Назначить на проект</span>
+              </button>
+              <button
                 onClick={handleSendResults}
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
-                <Send className="w-4 h-4" />
-                <span>Отправить результаты</span>
+                <Download className="w-4 h-4" />
+                <span>Отправить в Telegram</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Навигация по вкладкам */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4">
-          <nav className="flex space-x-8">
-            {[
-              { id: 'users', name: 'Пользователи', icon: Users },
-              { id: 'projects', name: 'Проекты', icon: Folder },
-              { id: 'results', name: 'Результаты', icon: BarChart3 }
-            ].map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.name}</span>
-                </button>
-              );
-            })}
+      {/* Навигация */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'users'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Users className="w-4 h-4 inline mr-2" />
+              Пользователи ({users.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'projects'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FolderOpen className="w-4 h-4 inline mr-2" />
+              Проекты ({projects.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('results')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'results'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 inline mr-2" />
+              Результаты ({surveyResults.length})
+            </button>
           </nav>
         </div>
-      </div>
 
-      {/* Контент */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Вкладка пользователей */}
         {activeTab === 'users' && (
           <div>
@@ -235,7 +263,7 @@ const AdminPanel = () => {
                 onClick={() => openUserModal()}
                 className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <UserPlus className="w-4 h-4" />
                 <span>Добавить пользователя</span>
               </button>
             </div>
@@ -314,7 +342,7 @@ const AdminPanel = () => {
                 onClick={() => openProjectModal()}
                 className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                <FolderPlus className="w-4 h-4" />
                 <span>Добавить проект</span>
               </button>
             </div>
@@ -350,7 +378,7 @@ const AdminPanel = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => openProjectModal(project)}
-                          className="text-primary-600 hover:text-primary-900"
+                          className="text-primary-600 hover:text-primary-900 mr-3"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -368,9 +396,6 @@ const AdminPanel = () => {
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Результаты опросов</h2>
-              <div className="text-sm text-gray-500">
-                Всего ответов: {surveyResults.length}
-              </div>
             </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -384,7 +409,7 @@ const AdminPanel = () => {
                       Проект
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Общая оценка
+                      Оценка
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Дата
@@ -396,7 +421,7 @@ const AdminPanel = () => {
                     .filter((result, index, self) => 
                       index === self.findIndex(r => 
                         r.user_name === result.user_name && 
-                        r.project_name === result.project_name &&
+                        r.project_name === result.project_name && 
                         r.completed_at === result.completed_at
                       )
                     )
@@ -428,6 +453,72 @@ const AdminPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Модальное окно назначения пользователя на проект */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Назначить пользователя на проект
+            </h3>
+            <form onSubmit={handleAssignUserToProject}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Пользователь
+                  </label>
+                  <select
+                    value={assignData.userId}
+                    onChange={(e) => setAssignData({...assignData, userId: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  >
+                    <option value="">Выберите пользователя</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Проект
+                  </label>
+                  <select
+                    value={assignData.projectId}
+                    onChange={(e) => setAssignData({...assignData, projectId: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  >
+                    <option value="">Выберите проект</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAssignModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
+                >
+                  Назначить
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Модальное окно пользователя */}
       {showUserModal && (
@@ -514,7 +605,7 @@ const AdminPanel = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
-                    Название
+                    Название проекта
                   </label>
                   <input
                     type="text"
@@ -531,8 +622,8 @@ const AdminPanel = () => {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={3}
                     className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                    rows="3"
                   />
                 </div>
               </div>
