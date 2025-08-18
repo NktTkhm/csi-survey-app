@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: csi-survey-app
+    env: node
+    plan: free
+    buildCommand: npm run install-all && npm run build
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: TELEGRAM_BOT_TOKEN
+        value: 7760488085:AAHTUSXbuJSSSmET-UdSpEPG1AmsoZesIlA
+      - key: ADMIN_CHAT_ID
+        value: 7457987990
+      - key: JWT_SECRET
+        value: mysecretkey123456789abcdef
+      - key: DB_PATH
+        value: ./database.sqlite
+      - key: CORS_ORIGIN
+        value: https://csi-survey-app.onrender.com

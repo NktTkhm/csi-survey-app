@@ -1,0 +1,15 @@
+# Переменные окружения для Render
+# Скопируйте эти значения в Render Dashboard → Environment Variables
+
+PORT=5000
+TELEGRAM_BOT_TOKEN=7760488085:AAHTUSXbuJSSSmET-UdSpEPG1AmsoZesIlA
+ADMIN_CHAT_ID=7457987990
+JWT_SECRET=mysecretkey123456789abcdef
+DB_PATH=./database.sqlite
+CORS_ORIGIN=https://ваш-домен.onrender.com
+
+# Настройки для Render:
+# Build Command: npm run install-all && npm run build
+# Start Command: npm start
+# Environment: Node
+# Plan: Free
