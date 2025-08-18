@@ -15,6 +15,200 @@ class Database {
     });
   }
 
+  // Инициализация базы данных
+  async init() {
+    try {
+      await this.db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT UNIQUE NOT NULL,
+          is_admin INTEGER DEFAULT 0,
+          is_active INTEGER DEFAULT 1,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS projects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS user_projects (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          project_id INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id),
+          FOREIGN KEY (project_id) REFERENCES projects (id),
+          UNIQUE(user_id, project_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS questions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          text TEXT NOT NULL,
+          order_num INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS survey_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          project_id INTEGER NOT NULL,
+          total_score REAL,
+          completed_at DATETIME,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id),
+          FOREIGN KEY (project_id) REFERENCES projects (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS survey_responses (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id INTEGER NOT NULL,
+          question_id INTEGER NOT NULL,
+          rating INTEGER NOT NULL,
+          comment TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (session_id) REFERENCES survey_sessions (id),
+          FOREIGN KEY (question_id) REFERENCES questions (id)
+        );
+      `);
+
+      // Добавляем тестовые данные, если база пустая
+      await this.addTestData();
+
+      console.log('✅ База данных инициализирована');
+    } catch (error) {
+      console.error('❌ Ошибка инициализации базы данных:', error);
+      throw error;
+    }
+  }
+
+  // Добавление тестовых данных
+  async addTestData() {
+    try {
+      // Проверяем, есть ли уже данные
+      const userCount = await this.db.get('SELECT COUNT(*) as count FROM users');
+      if (userCount.count > 0) {
+        console.log('📊 Данные уже существуют, пропускаем создание тестовых данных');
+        return;
+      }
+
+      console.log('📝 Создание тестовых данных...');
+
+      // Добавляем тестовых пользователей
+      const testUsers = [
+        { name: 'Тихомиров Никита', email: 'tikhomirov@example.com', is_admin: 1 },
+        { name: 'Иванов Иван', email: 'ivanov@example.com', is_admin: 0 },
+        { name: 'Петров Петр', email: 'petrov@example.com', is_admin: 0 },
+        { name: 'Сидоров Сидор', email: 'sidorov@example.com', is_admin: 0 },
+        { name: 'Козлов Козел', email: 'kozlov@example.com', is_admin: 0 },
+        { name: 'Волков Волк', email: 'volkov@example.com', is_admin: 0 },
+        { name: 'Медведев Медведь', email: 'medvedev@example.com', is_admin: 0 },
+        { name: 'Лисицын Лис', email: 'lisitsyn@example.com', is_admin: 0 },
+        { name: 'Зайцев Заяц', email: 'zaytsev@example.com', is_admin: 0 },
+        { name: 'Белов Белый', email: 'belov@example.com', is_admin: 0 },
+        { name: 'Чернов Черный', email: 'chernov@example.com', is_admin: 0 },
+        { name: 'Краснов Красный', email: 'krasnov@example.com', is_admin: 0 },
+        { name: 'Желтов Желтый', email: 'zheltov@example.com', is_admin: 0 },
+        { name: 'Синьков Синий', email: 'sinkov@example.com', is_admin: 0 },
+        { name: 'Зеленов Зеленый', email: 'zelenov@example.com', is_admin: 0 },
+        { name: 'Оранжев Оранжевый', email: 'oranzhev@example.com', is_admin: 0 },
+        { name: 'Фиолетов Фиолетовый', email: 'fioletov@example.com', is_admin: 0 },
+        { name: 'Розов Розовый', email: 'rozov@example.com', is_admin: 0 },
+        { name: 'Серый Серый', email: 'sery@example.com', is_admin: 0 },
+        { name: 'Коричнев Коричневый', email: 'korichnev@example.com', is_admin: 0 },
+        { name: 'Голубов Голубой', email: 'golubov@example.com', is_admin: 0 }
+      ];
+
+      for (const user of testUsers) {
+        await this.db.run(
+          'INSERT INTO users (name, email, is_admin) VALUES (?, ?, ?)',
+          [user.name, user.email, user.is_admin]
+        );
+      }
+
+      // Добавляем тестовые проекты
+      const testProjects = [
+        { name: 'Проект А', description: 'Описание проекта А' },
+        { name: 'Проект Б', description: 'Описание проекта Б' },
+        { name: 'Проект В', description: 'Описание проекта В' },
+        { name: 'Проект Г', description: 'Описание проекта Г' },
+        { name: 'Проект Д', description: 'Описание проекта Д' }
+      ];
+
+      for (const project of testProjects) {
+        await this.db.run(
+          'INSERT INTO projects (name, description) VALUES (?, ?)',
+          [project.name, project.description]
+        );
+      }
+
+      // Добавляем вопросы
+      const questions = [
+        'Насколько эффективно выполняются функции системного анализа на проекте?',
+        'Качество документации и технических заданий',
+        'Взаимодействие с заказчиком и стейкхолдерами',
+        'Процесс сбора и анализа требований',
+        'Моделирование бизнес-процессов',
+        'Проектирование архитектуры системы',
+        'Контроль качества и тестирование',
+        'Управление изменениями и версиями',
+        'Коммуникация с командой разработки',
+        'Соблюдение методологий и стандартов'
+      ];
+
+      for (let i = 0; i < questions.length; i++) {
+        await this.db.run(
+          'INSERT INTO questions (text, order_num) VALUES (?, ?)',
+          [questions[i], i + 1]
+        );
+      }
+
+      // Назначаем некоторых пользователей на проекты
+      const assignments = [
+        { userId: 1, projectId: 1 },
+        { userId: 1, projectId: 2 },
+        { userId: 2, projectId: 1 },
+        { userId: 3, projectId: 2 },
+        { userId: 4, projectId: 3 },
+        { userId: 5, projectId: 4 },
+        { userId: 6, projectId: 5 },
+        { userId: 7, projectId: 1 },
+        { userId: 8, projectId: 2 },
+        { userId: 9, projectId: 3 },
+        { userId: 10, projectId: 4 },
+        { userId: 11, projectId: 5 },
+        { userId: 12, projectId: 1 },
+        { userId: 13, projectId: 2 },
+        { userId: 14, projectId: 3 },
+        { userId: 15, projectId: 4 },
+        { userId: 16, projectId: 5 },
+        { userId: 17, projectId: 1 },
+        { userId: 18, projectId: 2 },
+        { userId: 19, projectId: 3 },
+        { userId: 20, projectId: 4 },
+        { userId: 21, projectId: 5 }
+      ];
+
+      for (const assignment of assignments) {
+        try {
+          await this.db.run(
+            'INSERT INTO user_projects (user_id, project_id) VALUES (?, ?)',
+            [assignment.userId, assignment.projectId]
+          );
+        } catch (error) {
+          // Игнорируем дубликаты
+        }
+      }
+
+      console.log('✅ Тестовые данные созданы');
+    } catch (error) {
+      console.error('❌ Ошибка создания тестовых данных:', error);
+    }
+  }
+
   // Пользователи
   async getUsers() {
     return new Promise((resolve, reject) => {
@@ -154,7 +348,7 @@ class Database {
   async completeSurveySession(sessionId, totalScore) {
     return new Promise((resolve, reject) => {
       this.db.run(
-        'UPDATE survey_sessions SET completed = 1, total_score = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE survey_sessions SET total_score = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?',
         [totalScore, sessionId],
         function(err) {
           if (err) reject(err);
@@ -168,8 +362,8 @@ class Database {
   async saveSurveyResponse(sessionId, questionId, rating, comment = null) {
     return new Promise((resolve, reject) => {
       this.db.run(
-        'INSERT INTO survey_responses (user_id, project_id, question_id, rating, comment) SELECT user_id, project_id, ?, ?, ? FROM survey_sessions WHERE id = ?',
-        [questionId, rating, comment, sessionId],
+        'INSERT INTO survey_responses (session_id, question_id, rating, comment) VALUES (?, ?, ?, ?)',
+        [sessionId, questionId, rating, comment],
         function(err) {
           if (err) reject(err);
           else resolve({ id: this.lastID, questionId, rating, comment });
@@ -191,11 +385,11 @@ class Database {
           ss.total_score,
           ss.completed_at
         FROM survey_responses sr
-        INNER JOIN users u ON sr.user_id = u.id
-        INNER JOIN projects p ON sr.project_id = p.id
+        INNER JOIN survey_sessions ss ON sr.session_id = ss.id
+        INNER JOIN users u ON ss.user_id = u.id
+        INNER JOIN projects p ON ss.project_id = p.id
         INNER JOIN questions q ON sr.question_id = q.id
-        INNER JOIN survey_sessions ss ON sr.user_id = ss.user_id AND sr.project_id = ss.project_id
-        WHERE ss.completed = 1
+        WHERE ss.completed_at IS NOT NULL
         ORDER BY ss.completed_at DESC, u.name, q.order_num
       `, (err, rows) => {
         if (err) reject(err);
@@ -215,10 +409,10 @@ class Database {
           ss.total_score,
           ss.completed_at
         FROM survey_responses sr
-        INNER JOIN projects p ON sr.project_id = p.id
+        INNER JOIN survey_sessions ss ON sr.session_id = ss.id
+        INNER JOIN projects p ON ss.project_id = p.id
         INNER JOIN questions q ON sr.question_id = q.id
-        INNER JOIN survey_sessions ss ON sr.user_id = ss.user_id AND sr.project_id = ss.project_id
-        WHERE sr.user_id = ? AND ss.completed = 1
+        WHERE ss.user_id = ? AND ss.completed_at IS NOT NULL
         ORDER BY ss.completed_at DESC, q.order_num
       `, [userId], (err, rows) => {
         if (err) reject(err);

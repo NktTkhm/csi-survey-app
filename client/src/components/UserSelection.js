@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ArrowRight, Users } from 'lucide-react';
-import toast from 'react-hot-toast';
 import axios from 'axios';
+import toast from 'react-hot-toast';
+import { ChevronDown, User, Settings } from 'lucide-react';
 
 const UserSelection = () => {
   const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
   const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [showAdminLink, setShowAdminLink] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,32 +18,40 @@ const UserSelection = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/admin/users');
-      const activeUsers = response.data.filter(user => user.is_active);
-      setUsers(activeUsers);
+      setLoading(true);
+      const response = await axios.get('/api/users');
+      setUsers(response.data);
+      
+      // Проверяем, есть ли администраторы
+      const hasAdmins = response.data.some(user => user.is_admin);
+      setShowAdminLink(hasAdmins);
     } catch (error) {
       console.error('Ошибка загрузки пользователей:', error);
-      toast.error('Ошибка загрузки списка пользователей');
+      toast.error('Ошибка загрузки пользователей');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUserSelect = (user) => {
-    setSelectedUser(user);
+  const handleUserSelect = (userId) => {
+    setSelectedUser(userId);
   };
 
   const handleContinue = () => {
-    if (selectedUser) {
-      navigate(`/user/${selectedUser.id}/projects`);
-    } else {
+    if (!selectedUser) {
       toast.error('Пожалуйста, выберите пользователя');
+      return;
     }
+    navigate(`/projects/${selectedUser}`);
+  };
+
+  const handleAdminClick = () => {
+    navigate('/admin');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Загрузка пользователей...</p>
@@ -51,77 +61,76 @@ const UserSelection = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-            <Users className="w-8 h-8 text-primary-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Выбор пользователя
+            </h1>
+            <p className="text-gray-600">
+              Выберите пользователя для прохождения опроса
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Выберите пользователя
-          </h1>
-          <p className="text-gray-600">
-            Выберите сотрудника для прохождения опроса
-          </p>
-        </div>
 
-        <div className="space-y-3 mb-8">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              onClick={() => handleUserSelect(user)}
-              className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                selectedUser?.id === user.id
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary-600" />
+          <div className="space-y-6">
+            {/* Выпадающий список пользователей */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Пользователь
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedUser}
+                  onChange={(e) => handleUserSelect(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 appearance-none bg-white"
+                >
+                  <option value="">Выберите пользователя</option>
+                  {users
+                    .filter(user => user.is_active)
+                    .map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} {user.is_admin && '(Админ)'}
+                      </option>
+                    ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <ChevronDown className="h-5 w-5 text-gray-400" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900">{user.name}</h3>
-                  {user.email && (
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                  )}
-                </div>
-                {selectedUser?.id === user.id && (
-                  <div className="w-6 h-6 bg-primary-500 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
-                  </div>
-                )}
               </div>
             </div>
-          ))}
-        </div>
 
-        {users.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Нет доступных пользователей</p>
+            {/* Кнопка продолжить */}
+            <button
+              onClick={handleContinue}
+              disabled={!selectedUser}
+              className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                selectedUser
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Продолжить
+            </button>
+
+            {/* Ссылка на админку (только если есть администраторы) */}
+            {showAdminLink && (
+              <div className="pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleAdminClick}
+                  className="w-full flex items-center justify-center space-x-2 py-2 px-4 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Админ панель</span>
+                </button>
+              </div>
+            )}
           </div>
-        )}
 
-        <button
-          onClick={handleContinue}
-          disabled={!selectedUser}
-          className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-            selectedUser
-              ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <span>Продолжить</span>
-          <ArrowRight className="w-5 h-5" />
-        </button>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => navigate('/admin')}
-            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-          >
-            Админ панель
-          </button>
+          {/* Информация о количестве пользователей */}
+          <div className="mt-6 text-center text-sm text-gray-500">
+            <p>Доступно пользователей: {users.filter(u => u.is_active).length}</p>
+          </div>
         </div>
       </div>
     </div>

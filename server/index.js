@@ -10,6 +10,9 @@ const telegramBot = require('./telegram-bot');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Инициализация базы данных
+db.init().catch(console.error);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
@@ -38,6 +41,17 @@ app.get('/api/health', (req, res) => {
 
 // Маршруты API
 
+// Получение всех пользователей
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await db.getUsers();
+    res.json(users);
+  } catch (error) {
+    console.error('Ошибка получения пользователей:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+});
+
 // Получение пользователя по ID
 app.get('/api/users/:id', async (req, res) => {
   try {
@@ -53,9 +67,9 @@ app.get('/api/users/:id', async (req, res) => {
 });
 
 // Получение проектов пользователя
-app.get('/api/users/:id/projects', async (req, res) => {
+app.get('/api/projects/:userId', async (req, res) => {
   try {
-    const projects = await db.getUserProjects(req.params.id);
+    const projects = await db.getUserProjects(req.params.userId);
     res.json(projects);
   } catch (error) {
     console.error('Ошибка получения проектов пользователя:', error);

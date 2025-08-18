@@ -1,19 +1,22 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import './index.css';
-
-// Компоненты
 import UserSelection from './components/UserSelection';
 import ProjectSelection from './components/ProjectSelection';
 import Survey from './components/Survey';
 import AdminPanel from './components/AdminPanel';
-import SurveyComplete from './components/SurveyComplete';
+import './App.css';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<UserSelection />} />
+          <Route path="/projects/:userId" element={<ProjectSelection />} />
+          <Route path="/survey/:userId/:projectId" element={<Survey />} />
+          <Route path="/admin" element={<AdminPanel />} />
+        </Routes>
         <Toaster 
           position="top-right"
           toastOptions={{
@@ -38,15 +41,6 @@ function App() {
             },
           }}
         />
-        
-        <Routes>
-          <Route path="/" element={<UserSelection />} />
-          <Route path="/user/:userId/projects" element={<ProjectSelection />} />
-          <Route path="/survey/:userId/:projectId" element={<Survey />} />
-          <Route path="/complete" element={<SurveyComplete />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
       </div>
     </Router>
   );
