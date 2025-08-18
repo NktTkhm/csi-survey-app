@@ -257,7 +257,16 @@ app.post('/api/admin/send-results', async (req, res) => {
     res.json({ success: true, message: 'Результаты отправлены в Telegram' });
   } catch (error) {
     console.error('Ошибка отправки результатов:', error);
-    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    
+    // Проверяем на rate limiting
+    if (error.message && error.message.includes('Too many requests')) {
+      res.status(429).json({ 
+        error: 'Too many requests, please try again later',
+        retryAfter: 60 // секунд
+      });
+    } else {
+      res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
   }
 });
 
@@ -272,7 +281,16 @@ app.post('/api/admin/test-telegram', async (req, res) => {
     }
   } catch (error) {
     console.error('Ошибка тестирования Telegram бота:', error);
-    res.status(500).json({ error: 'Ошибка тестирования Telegram бота' });
+    
+    // Проверяем на rate limiting
+    if (error.message && error.message.includes('Too many requests')) {
+      res.status(429).json({ 
+        error: 'Too many requests, please try again later',
+        retryAfter: 60 // секунд
+      });
+    } else {
+      res.status(500).json({ error: 'Ошибка тестирования Telegram бота' });
+    }
   }
 });
 

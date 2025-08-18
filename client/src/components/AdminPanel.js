@@ -27,6 +27,7 @@ const AdminPanel = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
+  const [telegramLoading, setTelegramLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -126,22 +127,46 @@ const AdminPanel = () => {
   };
 
   const handleSendResults = async () => {
+    if (telegramLoading) {
+      toast.error('Подождите, предыдущий запрос еще выполняется');
+      return;
+    }
+    
     try {
+      setTelegramLoading(true);
       await axios.post('/api/admin/send-results');
       toast.success('Результаты отправлены в Telegram');
     } catch (error) {
       console.error('Ошибка отправки результатов:', error);
-      toast.error('Ошибка отправки результатов');
+      if (error.response?.data?.error?.includes('Too many requests')) {
+        toast.error('Слишком много запросов. Подождите 1-2 минуты и попробуйте снова');
+      } else {
+        toast.error('Ошибка отправки результатов');
+      }
+    } finally {
+      setTelegramLoading(false);
     }
   };
 
   const handleTestTelegram = async () => {
+    if (telegramLoading) {
+      toast.error('Подождите, предыдущий запрос еще выполняется');
+      return;
+    }
+    
     try {
+      setTelegramLoading(true);
       await axios.post('/api/admin/test-telegram');
       toast.success('Telegram бот работает корректно');
     } catch (error) {
       console.error('Ошибка тестирования Telegram бота:', error);
-      toast.error('Telegram бот не работает');
+      if (error.response?.data?.error?.includes('Too many requests')) {
+        toast.error('Слишком много запросов. Подождите 1-2 минуты и попробуйте снова');
+      } else {
+        toast.error('Telegram бот не работает');
+      }
+    } finally {
+      setTelegramLoading(false);
     }
   };
 
@@ -214,17 +239,35 @@ const AdminPanel = () => {
               </button>
               <button
                 onClick={handleTestTelegram}
-                className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                disabled={telegramLoading}
+                className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors ${
+                  telegramLoading 
+                    ? 'bg-yellow-400 cursor-not-allowed' 
+                    : 'bg-yellow-600 hover:bg-yellow-700'
+                }`}
               >
-                <Settings className="w-4 h-4" />
-                <span>Тест Telegram</span>
+                {telegramLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Settings className="w-4 h-4" />
+                )}
+                <span>{telegramLoading ? 'Тестирование...' : 'Тест Telegram'}</span>
               </button>
               <button
                 onClick={handleSendResults}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                disabled={telegramLoading}
+                className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors ${
+                  telegramLoading 
+                    ? 'bg-green-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
               >
-                <Download className="w-4 h-4" />
-                <span>Отправить в Telegram</span>
+                {telegramLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                <span>{telegramLoading ? 'Отправка...' : 'Отправить в Telegram'}</span>
               </button>
             </div>
           </div>

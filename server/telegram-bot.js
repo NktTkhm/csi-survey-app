@@ -211,6 +211,9 @@ class TelegramBotService {
     }
 
     try {
+      // Добавляем небольшую задержку для предотвращения rate limiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       await this.bot.sendMessage(this.adminChatId, '🧪 Тест подключения CSI Survey App');
       return true;
     } catch (error) {
