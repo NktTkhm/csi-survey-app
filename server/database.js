@@ -325,7 +325,7 @@ class Database {
       this.db.all(`
         SELECT p.* FROM projects p
         INNER JOIN user_projects up ON p.id = up.project_id
-        WHERE up.user_id = ? AND p.is_active = 1
+        WHERE up.user_id = ?
         ORDER BY p.name
       `, [userId], (err, rows) => {
         if (err) reject(err);
