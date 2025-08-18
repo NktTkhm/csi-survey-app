@@ -27,6 +27,10 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Раздача статических файлов React приложения
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../client/build')));
+
 // Health check для Railway
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -268,9 +272,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Внутренняя ошибка сервера' });
 });
 
-// 404 для несуществующих маршрутов
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Маршрут не найден' });
+// Обработка всех остальных маршрутов - возвращаем React приложение
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
 });
 
 // Запуск сервера
