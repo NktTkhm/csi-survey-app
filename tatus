@@ -1,0 +1,5 @@
+[33mea023db[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix database persistence and improve UI with dropdown for users
+[33m6356e3b[m Add rate limiting protection for Telegram API
+[33m23f7779[m Add Telegram bot debugging and test functionality
+[33m069ce4f[m Add user-project assignment functionality to admin panel
+[33m43a8809[m Fix static file serving for React app

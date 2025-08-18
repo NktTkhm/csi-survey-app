@@ -4,6 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { ChevronDown, User, Settings } from 'lucide-react';
 
+// Обновленная версия с выпадающим списком пользователей
 const UserSelection = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState('');
