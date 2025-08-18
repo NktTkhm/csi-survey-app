@@ -18,6 +18,17 @@ class Database {
   // Инициализация базы данных
   async init() {
     try {
+      // Принудительно очищаем старые данные при каждом запуске
+      console.log('🧹 Очистка старых данных...');
+      await this.db.exec(`
+        DROP TABLE IF EXISTS survey_responses;
+        DROP TABLE IF EXISTS survey_sessions;
+        DROP TABLE IF EXISTS user_projects;
+        DROP TABLE IF EXISTS questions;
+        DROP TABLE IF EXISTS projects;
+        DROP TABLE IF EXISTS users;
+      `);
+
       await this.db.exec(`
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,8 +86,7 @@ class Database {
         );
       `);
 
-      // Проверяем и мигрируем структуру survey_responses если нужно
-      await this.migrateSurveyResponsesTable();
+      // Миграция больше не нужна, так как мы принудительно пересоздаем таблицы
 
       // Добавляем тестовые данные, если база пустая
       await this.addTestData();
@@ -148,13 +158,6 @@ class Database {
   // Добавление тестовых данных
   async addTestData() {
     try {
-      // Проверяем, есть ли уже данные
-      const userCount = await this.db.get('SELECT COUNT(*) as count FROM users');
-      if (userCount.count > 0) {
-        console.log('📊 Данные уже существуют, пропускаем создание тестовых данных');
-        return;
-      }
-
       console.log('📝 Создание тестовых данных...');
 
       // Добавляем только Тихомирова Никиту
