@@ -157,29 +157,9 @@ class Database {
 
       console.log('📝 Создание тестовых данных...');
 
-      // Добавляем тестовых пользователей
+      // Добавляем только Тихомирова Никиту
       const testUsers = [
-        { name: 'Тихомиров Никита', email: 'tikhomirov@example.com', is_admin: 1 },
-        { name: 'Иванов Иван', email: 'ivanov@example.com', is_admin: 0 },
-        { name: 'Петров Петр', email: 'petrov@example.com', is_admin: 0 },
-        { name: 'Сидоров Сидор', email: 'sidorov@example.com', is_admin: 0 },
-        { name: 'Козлов Козел', email: 'kozlov@example.com', is_admin: 0 },
-        { name: 'Волков Волк', email: 'volkov@example.com', is_admin: 0 },
-        { name: 'Медведев Медведь', email: 'medvedev@example.com', is_admin: 0 },
-        { name: 'Лисицын Лис', email: 'lisitsyn@example.com', is_admin: 0 },
-        { name: 'Зайцев Заяц', email: 'zaytsev@example.com', is_admin: 0 },
-        { name: 'Белов Белый', email: 'belov@example.com', is_admin: 0 },
-        { name: 'Чернов Черный', email: 'chernov@example.com', is_admin: 0 },
-        { name: 'Краснов Красный', email: 'krasnov@example.com', is_admin: 0 },
-        { name: 'Желтов Желтый', email: 'zheltov@example.com', is_admin: 0 },
-        { name: 'Синьков Синий', email: 'sinkov@example.com', is_admin: 0 },
-        { name: 'Зеленов Зеленый', email: 'zelenov@example.com', is_admin: 0 },
-        { name: 'Оранжев Оранжевый', email: 'oranzhev@example.com', is_admin: 0 },
-        { name: 'Фиолетов Фиолетовый', email: 'fioletov@example.com', is_admin: 0 },
-        { name: 'Розов Розовый', email: 'rozov@example.com', is_admin: 0 },
-        { name: 'Серый Серый', email: 'sery@example.com', is_admin: 0 },
-        { name: 'Коричнев Коричневый', email: 'korichnev@example.com', is_admin: 0 },
-        { name: 'Голубов Голубой', email: 'golubov@example.com', is_admin: 0 }
+        { name: 'Тихомиров Никита', email: 'tikhomirov@example.com', is_admin: 1 }
       ];
 
       for (const user of testUsers) {
@@ -205,7 +185,7 @@ class Database {
         );
       }
 
-      // Добавляем правильные вопросы из файла question.txt
+      // Добавляем только 13 правильных вопросов из файла question.txt
       const questions = [
         'Насколько системный аналитик помогает команде избежать недопонимания и ошибок при разработке функциональности?',
         'Насколько удобно вам взаимодействовать с системным аналитиком вашего проекта?',
@@ -229,30 +209,13 @@ class Database {
         );
       }
 
-      // Назначаем некоторых пользователей на проекты
+      // Назначаем Тихомирова Никиту на все проекты
       const assignments = [
         { userId: 1, projectId: 1 },
         { userId: 1, projectId: 2 },
-        { userId: 2, projectId: 1 },
-        { userId: 3, projectId: 2 },
-        { userId: 4, projectId: 3 },
-        { userId: 5, projectId: 4 },
-        { userId: 6, projectId: 5 },
-        { userId: 7, projectId: 1 },
-        { userId: 8, projectId: 2 },
-        { userId: 9, projectId: 3 },
-        { userId: 10, projectId: 4 },
-        { userId: 11, projectId: 5 },
-        { userId: 12, projectId: 1 },
-        { userId: 13, projectId: 2 },
-        { userId: 14, projectId: 3 },
-        { userId: 15, projectId: 4 },
-        { userId: 16, projectId: 5 },
-        { userId: 17, projectId: 1 },
-        { userId: 18, projectId: 2 },
-        { userId: 19, projectId: 3 },
-        { userId: 20, projectId: 4 },
-        { userId: 21, projectId: 5 }
+        { userId: 1, projectId: 3 },
+        { userId: 1, projectId: 4 },
+        { userId: 1, projectId: 5 }
       ];
 
       for (const assignment of assignments) {
