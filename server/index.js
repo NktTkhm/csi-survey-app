@@ -261,6 +261,21 @@ app.post('/api/admin/send-results', async (req, res) => {
   }
 });
 
+// Тест Telegram бота
+app.post('/api/admin/test-telegram', async (req, res) => {
+  try {
+    const success = await telegramBot.testConnection();
+    if (success) {
+      res.json({ success: true, message: 'Telegram бот работает корректно' });
+    } else {
+      res.status(500).json({ error: 'Telegram бот не работает' });
+    }
+  } catch (error) {
+    console.error('Ошибка тестирования Telegram бота:', error);
+    res.status(500).json({ error: 'Ошибка тестирования Telegram бота' });
+  }
+});
+
 // Проверка здоровья сервера
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

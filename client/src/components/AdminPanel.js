@@ -135,6 +135,16 @@ const AdminPanel = () => {
     }
   };
 
+  const handleTestTelegram = async () => {
+    try {
+      await axios.post('/api/admin/test-telegram');
+      toast.success('Telegram бот работает корректно');
+    } catch (error) {
+      console.error('Ошибка тестирования Telegram бота:', error);
+      toast.error('Telegram бот не работает');
+    }
+  };
+
   const openUserModal = (user = null) => {
     if (user) {
       setEditingUser(user);
@@ -201,6 +211,13 @@ const AdminPanel = () => {
               >
                 <Link className="w-4 h-4" />
                 <span>Назначить на проект</span>
+              </button>
+              <button
+                onClick={handleTestTelegram}
+                className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Тест Telegram</span>
               </button>
               <button
                 onClick={handleSendResults}
