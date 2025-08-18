@@ -75,6 +75,9 @@ class Database {
         );
       `);
 
+      // Проверяем и мигрируем структуру survey_responses если нужно
+      await this.migrateSurveyResponsesTable();
+
       // Добавляем тестовые данные, если база пустая
       await this.addTestData();
 
@@ -82,6 +85,43 @@ class Database {
     } catch (error) {
       console.error('❌ Ошибка инициализации базы данных:', error);
       throw error;
+    }
+  }
+
+  // Миграция таблицы survey_responses
+  async migrateSurveyResponsesTable() {
+    try {
+      // Проверяем, есть ли колонка session_id
+      const tableInfo = await this.db.all("PRAGMA table_info(survey_responses)");
+      const hasSessionId = tableInfo.some(col => col.name === 'session_id');
+      
+      if (!hasSessionId) {
+        console.log('🔄 Миграция таблицы survey_responses...');
+        
+        // Создаем новую таблицу с правильной структурой
+        await this.db.exec(`
+          CREATE TABLE survey_responses_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            question_id INTEGER NOT NULL,
+            rating INTEGER NOT NULL,
+            comment TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (session_id) REFERENCES survey_sessions (id),
+            FOREIGN KEY (question_id) REFERENCES questions (id)
+          )
+        `);
+        
+        // Удаляем старую таблицу и переименовываем новую
+        await this.db.exec(`
+          DROP TABLE IF EXISTS survey_responses;
+          ALTER TABLE survey_responses_new RENAME TO survey_responses;
+        `);
+        
+        console.log('✅ Миграция survey_responses завершена');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка миграции survey_responses:', error);
     }
   }
 
@@ -375,48 +415,126 @@ class Database {
   // Получение результатов опросов
   async getSurveyResults() {
     return new Promise((resolve, reject) => {
-      this.db.all(`
-        SELECT 
-          u.name as user_name,
-          p.name as project_name,
-          q.text as question_text,
-          sr.rating,
-          sr.comment,
-          ss.total_score,
-          ss.completed_at
-        FROM survey_responses sr
-        INNER JOIN survey_sessions ss ON sr.session_id = ss.id
-        INNER JOIN users u ON ss.user_id = u.id
-        INNER JOIN projects p ON ss.project_id = p.id
-        INNER JOIN questions q ON sr.question_id = q.id
-        WHERE ss.completed_at IS NOT NULL
-        ORDER BY ss.completed_at DESC, u.name, q.order_num
-      `, (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
+      // Сначала проверяем структуру таблицы
+      this.db.all("PRAGMA table_info(survey_responses)", (err, columns) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        const hasSessionId = columns.some(col => col.name === 'session_id');
+        
+        if (hasSessionId) {
+          // Новая структура
+          this.db.all(`
+            SELECT 
+              u.name as user_name,
+              p.name as project_name,
+              q.text as question_text,
+              sr.rating,
+              sr.comment,
+              ss.total_score,
+              ss.completed_at
+            FROM survey_responses sr
+            INNER JOIN survey_sessions ss ON sr.session_id = ss.id
+            INNER JOIN users u ON ss.user_id = u.id
+            INNER JOIN projects p ON ss.project_id = p.id
+            INNER JOIN questions q ON sr.question_id = q.id
+            WHERE ss.completed_at IS NOT NULL
+            ORDER BY ss.completed_at DESC, u.name, q.order_num
+          `, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
+        } else {
+          // Старая структура (если есть)
+          this.db.all(`
+            SELECT 
+              u.name as user_name,
+              p.name as project_name,
+              q.text as question_text,
+              sr.rating,
+              sr.comment,
+              ss.total_score,
+              ss.completed_at
+            FROM survey_responses sr
+            INNER JOIN users u ON sr.user_id = u.id
+            INNER JOIN projects p ON sr.project_id = p.id
+            INNER JOIN questions q ON sr.question_id = q.id
+            INNER JOIN survey_sessions ss ON sr.user_id = ss.user_id AND sr.project_id = ss.project_id
+            WHERE ss.completed_at IS NOT NULL
+            ORDER BY ss.completed_at DESC, u.name, q.order_num
+          `, (err, rows) => {
+            if (err) {
+              // Если и старая структура не работает, возвращаем пустой массив
+              console.log('⚠️ Не удалось получить результаты, возвращаем пустой массив');
+              resolve([]);
+            } else {
+              resolve(rows);
+            }
+          });
+        }
       });
     });
   }
 
   async getSurveyResultsByUser(userId) {
     return new Promise((resolve, reject) => {
-      this.db.all(`
-        SELECT 
-          p.name as project_name,
-          q.text as question_text,
-          sr.rating,
-          sr.comment,
-          ss.total_score,
-          ss.completed_at
-        FROM survey_responses sr
-        INNER JOIN survey_sessions ss ON sr.session_id = ss.id
-        INNER JOIN projects p ON ss.project_id = p.id
-        INNER JOIN questions q ON sr.question_id = q.id
-        WHERE ss.user_id = ? AND ss.completed_at IS NOT NULL
-        ORDER BY ss.completed_at DESC, q.order_num
-      `, [userId], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
+      // Сначала проверяем структуру таблицы
+      this.db.all("PRAGMA table_info(survey_responses)", (err, columns) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        const hasSessionId = columns.some(col => col.name === 'session_id');
+        
+        if (hasSessionId) {
+          // Новая структура
+          this.db.all(`
+            SELECT 
+              p.name as project_name,
+              q.text as question_text,
+              sr.rating,
+              sr.comment,
+              ss.total_score,
+              ss.completed_at
+            FROM survey_responses sr
+            INNER JOIN survey_sessions ss ON sr.session_id = ss.id
+            INNER JOIN projects p ON ss.project_id = p.id
+            INNER JOIN questions q ON sr.question_id = q.id
+            WHERE ss.user_id = ? AND ss.completed_at IS NOT NULL
+            ORDER BY ss.completed_at DESC, q.order_num
+          `, [userId], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
+        } else {
+          // Старая структура (если есть)
+          this.db.all(`
+            SELECT 
+              p.name as project_name,
+              q.text as question_text,
+              sr.rating,
+              sr.comment,
+              ss.total_score,
+              ss.completed_at
+            FROM survey_responses sr
+            INNER JOIN projects p ON sr.project_id = p.id
+            INNER JOIN questions q ON sr.question_id = q.id
+            INNER JOIN survey_sessions ss ON sr.user_id = ss.user_id AND sr.project_id = ss.project_id
+            WHERE sr.user_id = ? AND ss.completed_at IS NOT NULL
+            ORDER BY ss.completed_at DESC, q.order_num
+          `, [userId], (err, rows) => {
+            if (err) {
+              // Если и старая структура не работает, возвращаем пустой массив
+              console.log('⚠️ Не удалось получить результаты пользователя, возвращаем пустой массив');
+              resolve([]);
+            } else {
+              resolve(rows);
+            }
+          });
+        }
       });
     });
   }
