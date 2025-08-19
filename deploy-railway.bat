@@ -73,3 +73,4 @@ echo.
 echo Подробная инструкция в файле: railway-deploy.md
 echo.
 pause
+

@@ -34,6 +34,7 @@ class Database {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
           email TEXT UNIQUE NOT NULL,
+          password TEXT,
           is_admin INTEGER DEFAULT 0,
           is_active INTEGER DEFAULT 1,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -525,6 +526,67 @@ class Database {
           });
         }
       });
+    });
+  }
+
+  // Методы для работы с паролями
+  async setUserPassword(userId, password) {
+    return new Promise((resolve, reject) => {
+      const bcrypt = require('bcryptjs');
+      bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        
+        this.db.run(
+          'UPDATE users SET password = ? WHERE id = ?',
+          [hash, userId],
+          function(err) {
+            if (err) reject(err);
+            else resolve(this.changes > 0);
+          }
+        );
+      });
+    });
+  }
+
+  async verifyUserPassword(userId, password) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT password FROM users WHERE id = ?',
+        [userId],
+        (err, row) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          
+          if (!row || !row.password) {
+            resolve(false);
+            return;
+          }
+          
+          const bcrypt = require('bcryptjs');
+          bcrypt.compare(password, row.password, (err, isMatch) => {
+            if (err) reject(err);
+            else resolve(isMatch);
+          });
+        }
+      );
+    });
+  }
+
+  async getUserById(userId) {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT id, name, email, is_admin, is_active FROM users WHERE id = ?',
+        [userId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
     });
   }
 

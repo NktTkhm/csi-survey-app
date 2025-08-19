@@ -39,6 +39,12 @@ const AdminPanel = () => {
     userId: '',
     projectId: ''
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    userId: '',
+    password: '',
+    confirmPassword: ''
+  });
 
   useEffect(() => {
     fetchData();
@@ -198,6 +204,42 @@ const AdminPanel = () => {
       setFormData({ name: '', description: '' });
     }
     setShowProjectModal(true);
+  };
+
+  const openPasswordModal = (user) => {
+    setPasswordData({
+      userId: user.id,
+      password: '',
+      confirmPassword: ''
+    });
+    setShowPasswordModal(true);
+  };
+
+  const handleSetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordData.password !== passwordData.confirmPassword) {
+      toast.error('Пароли не совпадают');
+      return;
+    }
+
+    if (passwordData.password.length < 4) {
+      toast.error('Пароль должен содержать минимум 4 символа');
+      return;
+    }
+
+    try {
+      await axios.post('/api/admin/set-password', {
+        userId: passwordData.userId,
+        password: passwordData.password
+      });
+      toast.success('Пароль успешно установлен');
+      setShowPasswordModal(false);
+      setPasswordData({ userId: '', password: '', confirmPassword: '' });
+    } catch (error) {
+      console.error('Ошибка установки пароля:', error);
+      toast.error('Ошибка установки пароля');
+    }
   };
 
   const openAssignModal = () => {
@@ -378,12 +420,22 @@ const AdminPanel = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => openUserModal(user)}
-                          className="text-primary-600 hover:text-primary-900 mr-3"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => openUserModal(user)}
+                            className="text-primary-600 hover:text-primary-900"
+                            title="Редактировать"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openPasswordModal(user)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Установить пароль"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -573,6 +625,73 @@ const AdminPanel = () => {
                   className="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700"
                 >
                   Назначить
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно установки пароля */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Установить пароль для пользователя
+            </h3>
+            <form onSubmit={handleSetPassword}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Пользователь
+                  </label>
+                  <input
+                    type="text"
+                    value={users.find(u => u.id === parseInt(passwordData.userId))?.name || ''}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Новый пароль
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.password}
+                    onChange={(e) => setPasswordData({...passwordData, password: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    required
+                    minLength={4}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Подтвердите пароль
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    required
+                    minLength={4}
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                >
+                  Установить пароль
                 </button>
               </div>
             </form>

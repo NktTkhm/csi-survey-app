@@ -64,3 +64,4 @@ echo Для остановки нажмите Ctrl+C
 echo.
 
 call npm run dev
+

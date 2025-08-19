@@ -10,3 +10,4 @@ restartPolicyMaxRetries = 10
 
 [[services]]
 name = "csi-survey-app"
+

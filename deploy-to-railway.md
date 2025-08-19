@@ -44,3 +44,4 @@ CORS_ORIGIN=https://ваш-домен.railway.app
 
 Ваше приложение доступно по адресу:
 `https://ваш-домен.railway.app`
+

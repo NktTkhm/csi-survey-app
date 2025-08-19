@@ -308,6 +308,70 @@ app.post('/api/admin/test-telegram', async (req, res) => {
   }
 });
 
+// API для работы с паролями
+
+// Проверка пароля пользователя
+app.post('/api/auth/verify-password', async (req, res) => {
+  try {
+    const { userId, password } = req.body;
+    
+    if (!userId || !password) {
+      return res.status(400).json({ error: 'Необходимы userId и password' });
+    }
+
+    const isValid = await db.verifyUserPassword(userId, password);
+    
+    if (isValid) {
+      const user = await db.getUserById(userId);
+      res.json({ 
+        success: true, 
+        user: user,
+        message: 'Пароль верный' 
+      });
+    } else {
+      res.status(401).json({ 
+        success: false, 
+        error: 'Неверный пароль' 
+      });
+    }
+  } catch (error) {
+    console.error('Ошибка проверки пароля:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+});
+
+// Установка пароля пользователя (админ)
+app.post('/api/admin/set-password', async (req, res) => {
+  try {
+    const { userId, password } = req.body;
+    
+    if (!userId || !password) {
+      return res.status(400).json({ error: 'Необходимы userId и password' });
+    }
+
+    if (password.length < 4) {
+      return res.status(400).json({ error: 'Пароль должен содержать минимум 4 символа' });
+    }
+
+    const success = await db.setUserPassword(userId, password);
+    
+    if (success) {
+      res.json({ 
+        success: true, 
+        message: 'Пароль успешно установлен' 
+      });
+    } else {
+      res.status(404).json({ 
+        success: false, 
+        error: 'Пользователь не найден' 
+      });
+    }
+  } catch (error) {
+    console.error('Ошибка установки пароля:', error);
+    res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  }
+});
+
 // Проверка здоровья сервера
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

@@ -78,3 +78,4 @@ JWT_SECRET=your_jwt_secret_here
 ## 📞 Поддержка
 
 Подробная документация: [README.md](README.md)
+

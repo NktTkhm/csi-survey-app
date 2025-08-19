@@ -21,9 +21,6 @@ RUN mkdir -p server/temp
 # Собираем клиентское приложение
 RUN cd client && npm run build
 
-# Инициализируем базу данных
-RUN cd server && npm run init-db
-
 # Открываем порт
 EXPOSE 5000
 

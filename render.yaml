@@ -18,3 +18,4 @@ services:
         value: ./database.sqlite
       - key: CORS_ORIGIN
         value: https://csi-survey-app.onrender.com
+
